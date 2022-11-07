@@ -6,6 +6,8 @@ ColorDetection class used to check if there was more red or blue in area. Then c
 
 Capture class with a ColorDetection object and is initialized with video source. Capture class contains process_frame() which uses object detection pipeline on each frame. Confidence score is displayed using after bounding boxes are used to detect blue armor plates.
 
+These masks are beneficial as they get rid of additional information that can cause the program to slow down.
+
 Used thresholding to detect the blue armor plates.
 
 Prompt 2:
