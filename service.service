@@ -1,12 +1,16 @@
 [Unit]
-Description=ComputerVisionMidterm
-After=multi-user.target
+Description=CV midterm systemD daemon example
+After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-ExecStart=python python /Downloads/Practical-Midterm_Robomaster/systemd.py
+Restart=always
+RestartSec=2
 User=ultraviolet
+ExecStart=python /Downloads/Practical-Midterm_Robomaster/systemd.py
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
+
