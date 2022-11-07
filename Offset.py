@@ -1,21 +1,21 @@
-
 import pyrealsense2.pyrealsense2 as rs
 import numpy as np
 import cv2
 import statistics
+import torch
 
 # Configure depth and color streams
 
 
-
 class DepthCamera:
 
-  
     # Constructor
     def __init__(self):
         # Configure depth and color streams
         self.pipeline = rs.pipeline()
         config = rs.config()
+        self.load_model()
+        # self.cap = cv2.VideoCapture("./CV_Detection-code-refactor-arjun/utils/vid.mp4")
 
         # Get device product line for setting a supporting resolution
         pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
@@ -31,6 +31,13 @@ class DepthCamera:
 
         # Start streaming
         self.pipeline.start(config)
+
+    def load_model(self): 
+        self.model = torch.hub.load('ultralytics/yolov5', 'custom', path='./Algorithm/pt_files/best.pt')
+
+	
+  
+  
 
     # Get Depth and Color Frame
     def get_frame(self):
@@ -49,24 +56,20 @@ class DepthCamera:
 
         return True, depth_image, color_image
 
-      
     def release(self):
         self.pipeline.stop()
 
-    def get_coordinates(frame, model):
-        results = model(frame)                  # using the model each frame
-        rows = results.pandas().xyxy[0]
+    def get_coordinates(self, frame, model):
+        
+        results = self.model(frame)
+       
+        rows = results.pandas().xyxy[0].to_numpy()
         if len(rows) != 0:
             x_min, y_min, x_max, y_max = rows['x_min'][0], rows['y_min'][0], rows['x_max'][0], rows['y_max'][0]
             return (x_min, y_min, x_max, y_max)
         return None
 
-    def get_model():
-        model = torch.hub.load('ultralytics/yolov5',
-                               'custom', path='./Algorithm/pt_files/best.pt')
-        return model
-
-    def process_frame(depth_frame, x_min, y_min, x_max, y_max):
+    def process_frame(self,depth_frame, x_min, y_min, x_max, y_max):
         values = []
         for x in range(x_min - 1, x_max):
             for y in range(y_min - 1, y_max):
@@ -79,7 +82,7 @@ class DepthCamera:
 # Display BBOX around detection with Estimated median depth.
 
 
-    def show_frame(color_frame, depth_frame, depth, coordinates):
+    def show_frame(self,color_frame, depth_frame, depth, coordinates):
         # Display Text for distance
         if coordinates != None:
             cv2.putText(color_frame, "Median: {}mm".format(
@@ -95,9 +98,25 @@ class DepthCamera:
         cv2.imshow("Video", color_frame)
         cv2.imshow("Video_Depth", depth_frame)
 
+    def det_move_(self, obj_x_coord, obj_y_coord, xres, yres):
+        obj_y_coord = yres-obj_y_coord
+        centerx, centery = xres/2.0, yres/2.0
+
+        
+        move_x = obj_x_coord-centerx
+        move_y = obj_y_coord-centery
+        if(move_x != 0):
+            move_x /= centerx
+        if(move_y != 0):
+            move_y /= centery
+
+        return(move_x, move_y)
+
+
+
 
 cam = DepthCamera()
-model = cam.get_model()
+
 oldCords = None
 depth = None
 
@@ -118,34 +137,38 @@ while True:
 
         # Get coordinates from color frame
         try:
-            coordinates = get_coordinates(color_frame, model)
+            coordinates = cam.get_coordinates(color_frame, cam.model)
+
         except:
             print("Error getting cordinates\n")
 
         if coordinates != None:
             # Get Median Depth from depth frame
             try:
-                depth = process_frame(
+                depth = cam.process_frame(
                     depth_frame, coordinates[0], coordinates[1], coordinates[2], coordinates[3])
             except:
                 print("Error processing_frame")
 
             # Debug mode
             if Debug_flag == 1:
-                print(coordinates)
+                print("In: ", coordinates)
                 print(coordinates)
                 print(depth)
-                show_frame(color_frame, depth_frame, depth, coordinates)
+                cam.show_frame(color_frame, depth_frame, depth, coordinates)
 
                 
+                
            # try:
-            final_cords = det_move_(
+            final_cords = cam.det_move(
                 (coordinates[0]+coordinates[2])/2,
                 (coordinates[1]+coordinates[3])/2,
                 640,
                 480)
+            print("This is run", final_cords)
 
 
+            
 if __name__ == '__main__':
     import sys
     main(sys.argv[1:])
