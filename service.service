@@ -1,1 +1,12 @@
+[Unit]
+Description=ComputerVisionMidterm
+After=multi-user.target
 
+[Service]
+Type=simple
+ExecStart=python python /Downloads/Practical-Midterm_Robomaster/systemd.py
+User=ultraviolet
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
