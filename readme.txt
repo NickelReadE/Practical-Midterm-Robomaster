@@ -12,7 +12,7 @@ Used thresholding to detect the blue armor plates.
 
 Prompt 2:
 
-The DepthCamera class used bounding box coordinates to get the angle offset values. 
+The DepthCamera class used bounding box coordinates to get the angle offset values. get_coordinates function gets the coordinates of the frame and returns (x_min, y_min, x_max, y_max) coordinates are then used to find median distance from heatmap.
 
 Prompt 3:
 
